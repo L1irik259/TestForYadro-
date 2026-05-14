@@ -2,16 +2,25 @@ package output
 
 import (
 	"fmt"
+	"io"
 	"sort"
 )
 
 func PrintAnyOrder(counts map[string]int) {
+	PrintAnyOrderTo(io.Discard, counts)
+}
+
+func PrintAnyOrderTo(w io.Writer, counts map[string]int) {
 	for name, count := range counts {
-		fmt.Printf("%q: %d\n", name, count)
+		fmt.Fprintf(w, "%q: %d\n", name, count)
 	}
 }
 
 func PrintSorted(counts map[string]int) {
+	PrintSortedTo(io.Discard, counts)
+}
+
+func PrintSortedTo(w io.Writer, counts map[string]int) {
 	type pair struct {
 		Name  string
 		Count int
@@ -31,6 +40,6 @@ func PrintSorted(counts map[string]int) {
 	})
 
 	for _, p := range pairs {
-		fmt.Printf("%q: %d\n", p.Name, p.Count)
+		fmt.Fprintf(w, "%q: %d\n", p.Name, p.Count)
 	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 
@@ -11,26 +12,37 @@ import (
 )
 
 func main() {
-	fileName := flag.String("file", "", "путь к файлу")
-	sortByFrequency := flag.Bool("sort", false, "сортировка по частоте")
-	workers := flag.Int("workers", runtime.NumCPU(), "количество воркеров")
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
 
-	flag.Parse()
+func run(args []string, stdout io.Writer, stderr io.Writer) int {
+	flagSet := flag.NewFlagSet("app", flag.ContinueOnError)
+	flagSet.SetOutput(stderr)
+
+	fileName := flagSet.String("file", "", "путь к файлу")
+	sortByFrequency := flagSet.Bool("sort", false, "сортировка по частоте")
+	workers := flagSet.Int("workers", runtime.NumCPU(), "количество воркеров")
+
+	if err := flagSet.Parse(args); err != nil {
+		return 1
+	}
 
 	if *fileName == "" {
-		fmt.Println("Укажи файл через -file")
-		os.Exit(1)
+		fmt.Fprintln(stdout, "Укажи файл через -file")
+		return 1
 	}
 
 	counts, err := namescounter.CountStreaming(*fileName, *workers)
 	if err != nil {
-		fmt.Printf("Ошибка: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stdout, "Ошибка: %v\n", err)
+		return 1
 	}
 
 	if *sortByFrequency {
-		output.PrintSorted(counts)
+		output.PrintSortedTo(stdout, counts)
 	} else {
-		output.PrintAnyOrder(counts)
+		output.PrintAnyOrderTo(stdout, counts)
 	}
+
+	return 0
 }
